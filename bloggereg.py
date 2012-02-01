@@ -35,20 +35,21 @@ def usage():
 
 def getUrl(filename):
   f = open(filename, 'r')
-  url = f.readline()
+  url = f.readline().rstrip()
   f.close
   return ''.join([url, "/feeds/posts/default"])
 
 def main():
   print len(sys.argv[1:])
-  if len(sys.argv[1:]) != 1:
+  if len(sys.argv[1:]) != 2:
     usage()
     sys.exit(1)
   blogger_service = service.GDataService()
   #PrintAllPosts(blogger_service)
   print "argv[1]: ", sys.argv[1]
   url = getUrl(sys.argv[1])
-  runningPostTitlePrint(blogger_service, url, "eyechildtest2")
+  outputfile = sys.argv[2]
+  runningPostTitlePrint(blogger_service, url, outputfile)
 
 if __name__ == '__main__':
   main()

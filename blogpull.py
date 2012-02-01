@@ -1,12 +1,17 @@
 from gdata import service
 import gdata
 import atom
-import sys, time, os
+import sys, time, os, errno
 
 def runningPostTitlePrint(blogger_service, uri, dirname):
-  os.makedirs(dirname)
-  feed = blogger_service.GetFeed(uri)
+  # Only create the requested directory if it doesn't already exist
+  try:
+    os.makedirs(dirname)
+  except OSError, e:
+    if e.errno != errno.EEXIST:
+      raise
 
+  feed = blogger_service.GetFeed(uri)
   for entry in feed.entry:
     saveToFile(entry, dirname)
   feed = blogger_service.GetNext(feed)
@@ -19,16 +24,19 @@ def runningPostTitlePrint(blogger_service, uri, dirname):
 
 def saveToFile(entry, dirname):
   filename = os.path.join(dirname, entry.published.text)
-  print "writing", filename
-  f = open(filename, 'w')
-  f.write(str(entry.title.text))
-  f.write("\n")
-  f.write(str(entry.published.text))
-  f.write("\n")
-  f.write(str(entry.content.text))
-  f.write("\n")
-  print "\t" + str(entry.title.text)
-  f.close()
+  if not os.path.exists(filename):
+    print "writing", filename
+    f = open(filename, 'w')
+    f.write(str(entry.title.text))
+    f.write("\n")
+    f.write(str(entry.published.text))
+    f.write("\n")
+    f.write(str(entry.content.text))
+    f.write("\n")
+    print "\t" + str(entry.title.text)
+    f.close()
+  else:
+    return
 
 def usage():
   print "Usage: python blogpull.py outputdirname"

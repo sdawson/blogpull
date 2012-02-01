@@ -3,22 +3,8 @@ import gdata
 import atom
 import sys, time, os
 
-def PrintAllPosts(blogger_service):
-  feed = blogger_service.GetFeed('http://theeyechild.blogspot.com/feeds/posts/default')
-
-  print feed.title.text
-  for entry in feed.entry:
-    print "\t" + str(entry.title.text)
-    #print "\t" + entry.content.text
-  print
-  new_feed = blogger_service.GetNext(feed)
-  for entry in new_feed.entry:
-    print "\t" + str(entry.title.text)
-  print
-
 def runningPostTitlePrint(blogger_service, uri, dirname):
   os.makedirs(dirname)
-  #f = open(dirname, 'w')
   feed = blogger_service.GetFeed(uri)
 
   for entry in feed.entry:
@@ -30,7 +16,6 @@ def runningPostTitlePrint(blogger_service, uri, dirname):
       saveToFile(entry, dirname)
     feed = blogger_service.GetNext(feed)
     time.sleep(10)
-  #f.close()
 
 def saveToFile(entry, dirname):
   filename = os.path.join(dirname, entry.published.text)
@@ -46,7 +31,7 @@ def saveToFile(entry, dirname):
   f.close()
 
 def usage():
-  print "Usage: python bloggerreg.py outputdirname"
+  print "Usage: python blogpull.py outputdirname"
 
 def getUrl(filename):
   f = open(filename, 'r')

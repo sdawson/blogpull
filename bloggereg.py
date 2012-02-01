@@ -1,6 +1,7 @@
 from gdata import service
 import gdata
 import atom
+import sys
 
 def PrintAllPosts(blogger_service):
   feed = blogger_service.GetFeed('http://theeyechild.blogspot.com/feeds/posts/default')
@@ -15,8 +16,8 @@ def PrintAllPosts(blogger_service):
     print "\t" + str(entry.title.text)
   print
 
-def runningPostTitlePrint(blogger_service, uri):
-  f = open("eyechildtest1", 'w')
+def runningPostTitlePrint(blogger_service, uri, filename):
+  f = open(filename, 'w')
   feed = blogger_service.GetFeed(uri)
 
   for entry in feed.entry:
@@ -29,10 +30,25 @@ def runningPostTitlePrint(blogger_service, uri):
     f.write("\n\n")
   f.close()
 
+def usage():
+  print "Usage: python pbloggerreg.py filename"
+
+def getUrl(filename):
+  f = open(filename, 'r')
+  url = f.readline()
+  f.close
+  return ''.join([url, "/feeds/posts/default"])
+
 def main():
+  print len(sys.argv[1:])
+  if len(sys.argv[1:]) != 1:
+    usage()
+    sys.exit(1)
   blogger_service = service.GDataService()
   #PrintAllPosts(blogger_service)
-  runningPostTitlePrint(blogger_service, 'http://theeyechild.blogspot.com/feeds/posts/default')
+  print "argv[1]: ", sys.argv[1]
+  url = getUrl(sys.argv[1])
+  runningPostTitlePrint(blogger_service, url, "eyechildtest2")
 
 if __name__ == '__main__':
   main()

@@ -1,8 +1,7 @@
 from gdata import service
 import gdata
 import atom
-import sys
-import time
+import sys, time, os
 
 def PrintAllPosts(blogger_service):
   feed = blogger_service.GetFeed('http://theeyechild.blogspot.com/feeds/posts/default')
@@ -17,29 +16,37 @@ def PrintAllPosts(blogger_service):
     print "\t" + str(entry.title.text)
   print
 
-def runningPostTitlePrint(blogger_service, uri, filename):
-  f = open(filename, 'w')
+def runningPostTitlePrint(blogger_service, uri, dirname):
+  os.makedirs(dirname)
+  #f = open(dirname, 'w')
   feed = blogger_service.GetFeed(uri)
 
   for entry in feed.entry:
-    print "writing", entry.title.text
-    f.write(str(entry.title.text))
-    f.write("\n")
-    f.write(str(entry.published.text))
-    f.write("\n")
-    f.write(str(entry.content.text))
-    f.write("\n\n")
+    saveToFile(entry, dirname)
   feed = blogger_service.GetNext(feed)
   while feed is not None:
     print "looping\n"
     for entry in feed.entry:
-      print "\t" + str(entry.title.text)
+      saveToFile(entry, dirname)
     feed = blogger_service.GetNext(feed)
     time.sleep(10)
+  #f.close()
+
+def saveToFile(entry, dirname):
+  filename = os.path.join(dirname, entry.published.text)
+  print "writing", filename
+  f = open(filename, 'w')
+  f.write(str(entry.title.text))
+  f.write("\n")
+  f.write(str(entry.published.text))
+  f.write("\n")
+  f.write(str(entry.content.text))
+  f.write("\n")
+  print "\t" + str(entry.title.text)
   f.close()
 
 def usage():
-  print "Usage: python bloggerreg.py filename"
+  print "Usage: python bloggerreg.py outputdirname"
 
 def getUrl(filename):
   f = open(filename, 'r')

@@ -16,22 +16,21 @@ def runningPostTitlePrint(blogger_service, uri, dirname):
     saveToFile(entry, dirname)
   feed = blogger_service.GetNext(feed)
   while feed is not None:
-    print "looping\n"
     for entry in feed.entry:
       saveToFile(entry, dirname)
     feed = blogger_service.GetNext(feed)
-    time.sleep(10)
+    time.sleep(3)
 
 def saveToFile(entry, dirname):
   filename = os.path.join(dirname, entry.published.text)
   if not os.path.exists(filename):
     print "writing", filename
     f = open(filename, 'w')
-    f.write(str(entry.title.text))
+    f.write(str(entry.title))
     f.write("\n")
-    f.write(str(entry.published.text))
+    f.write(str(entry.published))
     f.write("\n")
-    f.write(str(entry.content.text))
+    f.write(str(entry.content))
     f.write("\n")
     print "\t" + str(entry.title.text)
     f.close()

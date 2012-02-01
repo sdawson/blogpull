@@ -2,6 +2,7 @@ from gdata import service
 import gdata
 import atom
 import sys
+import time
 
 def PrintAllPosts(blogger_service):
   feed = blogger_service.GetFeed('http://theeyechild.blogspot.com/feeds/posts/default')
@@ -28,10 +29,17 @@ def runningPostTitlePrint(blogger_service, uri, filename):
     f.write("\n")
     f.write(str(entry.content.text))
     f.write("\n\n")
+  feed = blogger_service.GetNext(feed)
+  while feed is not None:
+    print "looping\n"
+    for entry in feed.entry:
+      print "\t" + str(entry.title.text)
+    feed = blogger_service.GetNext(feed)
+    time.sleep(10)
   f.close()
 
 def usage():
-  print "Usage: python pbloggerreg.py filename"
+  print "Usage: python bloggerreg.py filename"
 
 def getUrl(filename):
   f = open(filename, 'r')

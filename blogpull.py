@@ -15,7 +15,7 @@ def pullFeed(blogger_service, uri, dirname):
       raise
 
   feed = blogger_service.GetFeed(uri)
-  f = open(''.join([dirname, 'feedinfo']), 'w')
+  f = open(os.path.join(dirname, 'feedinfo'), 'w')
   f.write(str(feed.title) + "\n")
   f.write(str(feed.author) + "\n")
   f.write(str(feed.id) + "\n")
@@ -55,7 +55,7 @@ def sourceLocalImages(dirname, url):
     print "opening:", file
     contentSoup = BeautifulStoneSoup(f.read())
     f.close()
-    replaceImageTags(contentSoup, url)
+    replaceImageTags(contentSoup, dirname, url)
     tempfile = '.'.join([file, "tmp"])
     print "tempfile name:", tempfile
     ftemp = open(os.path.join(dirname, tempfile), 'w')
@@ -65,33 +65,33 @@ def sourceLocalImages(dirname, url):
 
 # Replaces image tags contained in a link
 # with local copies of the images
-def replaceImageTags(contentSoup, url):
+def replaceImageTags(contentSoup, dirname, url):
   netloc = urlparse(url).netloc
   # Replace links to images
-  links = contentSoup.findAll('a')
-  for link in links:
-    print "LINK:", link['href']
-    predType =  mimetypes.guess_type(link['href'])
+  for link in contentSoup.findAll('a'):
+    (predType, _) =  mimetypes.guess_type(link['href'])
     if predType in ('image/png', 'image/jpeg', 'image/gif'):
-      print "+++DOWNLOADING:", link['href']
-      filename = download(link['href'])
+      print "+++DOWNLOADING AHREF:", link['href']
+      filename = download(dirname, link['href'])
       link['href'] = filename
   # Replace image tags
   imgTags = contentSoup.findAll('img')
   for tag in imgTags:
-    # removes images referencing the blog itself
+    # removes images sourced from within the blog
     if netloc and netloc in tag['src']:
       tag.extract()
       continue
     else:
       print "+++DOWNLOADING:", tag['src']
-      filename = download(tag['src'])
+      filename = download(dirname, tag['src'])
       tag['src'] = filename
 
 def urlToName(url):
   return basename(urlsplit(url)[2])
 
-def download(url, localFileName = None):
+# Returns the filename of the downloaded file relative
+# to the final directory (as given by dirname)
+def download(dirname, url, localFileName = None):
   localName = urlToName(url)
   req = urllib2.Request(url)
   r = urllib2.urlopen(req)
@@ -106,9 +106,10 @@ def download(url, localFileName = None):
     if localFileName:
       # Save the file under the user-specified name
       localName = localFileName
-    f = open(localName, 'wb')
+    f = open(os.path.join(dirname, localName), 'wb')
     f.write(r.read())
     f.close()
+  return localName
 
 def getUrl(filename):
   f = open(filename, 'r')

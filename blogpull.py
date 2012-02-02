@@ -52,12 +52,10 @@ def sourceLocalImages(dirname, url):
   # Writes to temp file in case of large files
   for file in os.listdir(dirname):
     f = open(os.path.join(dirname, file), 'r')
-    print "opening:", file
     contentSoup = BeautifulStoneSoup(f.read())
     f.close()
     replaceImageTags(contentSoup, dirname, url)
     tempfile = '.'.join([file, "tmp"])
-    print "tempfile name:", tempfile
     ftemp = open(os.path.join(dirname, tempfile), 'w')
     ftemp.write(contentSoup.prettify())
     ftemp.close()
@@ -71,7 +69,6 @@ def replaceImageTags(contentSoup, dirname, url):
   for link in contentSoup.findAll('a'):
     (predType, _) =  mimetypes.guess_type(link['href'])
     if predType in ('image/png', 'image/jpeg', 'image/gif'):
-      print "+++DOWNLOADING AHREF:", link['href']
       filename = download(dirname, link['href'])
       link['href'] = filename
   # Replace image tags
@@ -82,7 +79,6 @@ def replaceImageTags(contentSoup, dirname, url):
       tag.extract()
       continue
     else:
-      print "+++DOWNLOADING:", tag['src']
       filename = download(dirname, tag['src'])
       tag['src'] = filename
 

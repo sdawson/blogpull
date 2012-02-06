@@ -4,7 +4,7 @@ from urlparse import urlparse, urlsplit
 from os.path import basename
 import gdata, atom, mimetypes
 import sys, time, os, errno, urllib
-import urllib2
+import urllib2, requests
 
 def pullFeed(blogger_service, uri, dirname):
   # Only create the requested directories if it doesn't already exist
@@ -72,7 +72,9 @@ def replaceImageTags(contentSoup, dirname, url):
   for link in contentSoup.findAll('a'):
     (predType, _) =  mimetypes.guess_type(link['href'])
     if predType in ('image/png', 'image/jpeg', 'image/gif'):
-      filename = download(dirname, 'fullsize', link['href'])
+      print "link['href']:", link['href']
+      filename = connectAndDownload(dirname, 'fullsize', link['href'])
+      #print "Downloaded filename:", filename
       link['href'] = filename
   # Replace image tags
   imgTags = contentSoup.findAll('img')
@@ -88,11 +90,31 @@ def replaceImageTags(contentSoup, dirname, url):
 def urlToName(url):
   return basename(urlsplit(url)[2])
 
+# Connects to a url that is expected to contain an image.  If it does
+# the image is downloaded.  Otherwise the actual image url is determined
+# first.
+def connectAndDownload(basedir, outputdir, url, localFileName = None):
+  print "url:", url
+  r = requests.get(url)
+  contentType = r.headers['content-type']
+  if contentType.find('text/html') != -1:
+    contentSoup = BeautifulStoneSoup(r.content)
+    for tag in contentSoup.findAll('img'):
+      print "downloading:", tag['src']
+      filename = download(basedir, outputdir, tag['src'])
+      return filename
+  elif contentType.find('image/png') != -1 or \
+       contentType.find('image/jpeg') != -1 or \
+       contentType.find('image/gif') != -1:
+    print "downloading:", url
+    return download(basedir, outputdir, url, localFileName)
+
 # Returns the filename of the downloaded file relative
 # to the chosen output directory.  The outputdir argument
 # gives the chosen output directory relative to the basedir
 # argument.
 def download(basedir, outputdir, url, localFileName = None):
+  print "Download args:", basedir, outputdir, url, localFileName
   localName = urlToName(url)
   req = urllib2.Request(url)
   r = urllib2.urlopen(req)
@@ -101,15 +123,15 @@ def download(basedir, outputdir, url, localFileName = None):
     localName = r.info()['Content-Disposition'].split('filename=')[1]
     if localName[0] == "" or localName[0] == "'" or localName[0] == "\"":
       localName = localName[1:-1]
-    elif r.url != url:
-      # A redirection occured, so take that filename from the final url
-      localName = urlToName(r.url)
-    if localFileName:
-      # Save the file under the user-specified name
-      localName = localFileName
-    f = open(os.path.join(basedir, outputdir, localName), 'wb')
-    f.write(r.read())
-    f.close()
+  elif r.url != url:
+    # A redirection occured, so take that filename from the final url
+    localName = urlToName(r.url)
+  if localFileName:
+    # Save the file under the user-specified name
+    localName = localFileName
+  f = open(os.path.join(basedir, outputdir, localName), 'wb')
+  f.write(r.read())
+  f.close()
   return os.path.join(outputdir, localName)
 
 def getUrl(filename):

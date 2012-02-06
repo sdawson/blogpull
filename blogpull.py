@@ -116,7 +116,7 @@ def download(basedir, outputdir, url, localFileName = None):
   if r.info().has_key('Content-Disposition'):
     # If the response has a Content-Disposition the filename is taken from it
     localName = r.info()['Content-Disposition'].split('filename=')[1]
-    if localName[0] == "" or localName[0] == "'" or localName[0] == "\"":
+    if localName[0] == "" or localName[0] == "'" or localName[0] == '"':
       localName = localName[1:-1]
   elif r.url != url:
     # A redirection occured, so take that filename from the final url

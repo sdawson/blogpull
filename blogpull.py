@@ -4,7 +4,7 @@ from urlparse import urlparse, urlsplit
 from os.path import basename
 import gdata, atom, mimetypes
 import sys, time, os, errno, urllib
-import urllib2, requests
+import requests
 
 def pullFeed(blogger_service, uri, dirname):
   # Only create the requested directories if it doesn't already exist
@@ -111,11 +111,10 @@ def connectAndDownload(basedir, outputdir, url, localFileName = None):
 # argument.
 def download(basedir, outputdir, url, localFileName = None):
   localName = urlToName(url)
-  req = urllib2.Request(url)
-  r = urllib2.urlopen(req)
-  if r.info().has_key('Content-Disposition'):
+  r = requests.get(url)
+  if r.headers['content-disposition']:
     # If the response has a Content-Disposition the filename is taken from it
-    localName = r.info()['Content-Disposition'].split('filename=')[1]
+    localName = r.headers['content-disposition'].split('filename=')[1]
     if localName[0] == "" or localName[0] == "'" or localName[0] == '"':
       localName = localName[1:-1]
   elif r.url != url:
@@ -125,7 +124,7 @@ def download(basedir, outputdir, url, localFileName = None):
     # Save the file under the user-specified name
     localName = localFileName
   f = open(os.path.join(basedir, outputdir, localName), 'wb')
-  f.write(r.read())
+  f.write(r.content)
   f.close()
   return os.path.join(outputdir, localName)
 

@@ -54,6 +54,7 @@ def sourceLocalImages(dirname, url):
   for file in os.listdir(dirname):
     fullFilePath = os.path.join(dirname, file)
     if os.path.isfile(fullFilePath):
+      print "Downloading image content for", file
       f = open(fullFilePath, 'r')
       contentSoup = BeautifulStoneSoup(f.read())
       f.close()
@@ -72,9 +73,7 @@ def replaceImageTags(contentSoup, dirname, url):
   for link in contentSoup.findAll('a'):
     (predType, _) =  mimetypes.guess_type(link['href'])
     if predType in ('image/png', 'image/jpeg', 'image/gif'):
-      print "link['href']:", link['href']
       filename = connectAndDownload(dirname, 'fullsize', link['href'])
-      #print "Downloaded filename:", filename
       link['href'] = filename
   # Replace image tags
   imgTags = contentSoup.findAll('img')
@@ -94,19 +93,16 @@ def urlToName(url):
 # the image is downloaded.  Otherwise the actual image url is determined
 # first.
 def connectAndDownload(basedir, outputdir, url, localFileName = None):
-  print "url:", url
   r = requests.get(url)
   contentType = r.headers['content-type']
   if contentType.find('text/html') != -1:
     contentSoup = BeautifulStoneSoup(r.content)
     for tag in contentSoup.findAll('img'):
-      print "downloading:", tag['src']
       filename = download(basedir, outputdir, tag['src'])
       return filename
   elif contentType.find('image/png') != -1 or \
        contentType.find('image/jpeg') != -1 or \
        contentType.find('image/gif') != -1:
-    print "downloading:", url
     return download(basedir, outputdir, url, localFileName)
 
 # Returns the filename of the downloaded file relative
@@ -114,7 +110,6 @@ def connectAndDownload(basedir, outputdir, url, localFileName = None):
 # gives the chosen output directory relative to the basedir
 # argument.
 def download(basedir, outputdir, url, localFileName = None):
-  print "Download args:", basedir, outputdir, url, localFileName
   localName = urlToName(url)
   req = urllib2.Request(url)
   r = urllib2.urlopen(req)

@@ -7,13 +7,14 @@ import sys, time, os, errno, urllib
 import urllib2
 
 def pullFeed(blogger_service, uri, dirname):
-  # Only create the requested directory if it doesn't already exist
+  # Only create the requested directories if it doesn't already exist
   try:
     os.makedirs(dirname)
+    os.makedirs(os.path.join(dirname, 'fullsize'))
+    os.makedirs(os.path.join(dirname, 'thumbs'))
   except OSError, e:
     if e.errno != errno.EEXIST:
       raise
-
   feed = blogger_service.GetFeed(uri)
   f = open(os.path.join(dirname, 'feedinfo'), 'w')
   f.write(str(feed.title) + "\n")
@@ -51,15 +52,17 @@ def saveToFile(entry, dirname):
 def sourceLocalImages(dirname, url):
   # Writes to temp file in case of large files
   for file in os.listdir(dirname):
-    f = open(os.path.join(dirname, file), 'r')
-    contentSoup = BeautifulStoneSoup(f.read())
-    f.close()
-    replaceImageTags(contentSoup, dirname, url)
-    tempfile = '.'.join([file, "tmp"])
-    ftemp = open(os.path.join(dirname, tempfile), 'w')
-    ftemp.write(contentSoup.prettify())
-    ftemp.close()
-    os.rename(os.path.join(dirname, tempfile), os.path.join(dirname, file))
+    fullFilePath = os.path.join(dirname, file)
+    if os.path.isfile(fullFilePath):
+      f = open(fullFilePath, 'r')
+      contentSoup = BeautifulStoneSoup(f.read())
+      f.close()
+      replaceImageTags(contentSoup, dirname, url)
+      tempfile = '.'.join([file, "tmp"])
+      ftemp = open(os.path.join(dirname, tempfile), 'w')
+      ftemp.write(contentSoup.prettify())
+      ftemp.close()
+      os.rename(os.path.join(dirname, tempfile), os.path.join(dirname, file))
 
 # Replaces image tags contained in a link
 # with local copies of the images
@@ -69,7 +72,7 @@ def replaceImageTags(contentSoup, dirname, url):
   for link in contentSoup.findAll('a'):
     (predType, _) =  mimetypes.guess_type(link['href'])
     if predType in ('image/png', 'image/jpeg', 'image/gif'):
-      filename = download(dirname, link['href'])
+      filename = download(dirname, 'fullsize', link['href'])
       link['href'] = filename
   # Replace image tags
   imgTags = contentSoup.findAll('img')
@@ -79,15 +82,17 @@ def replaceImageTags(contentSoup, dirname, url):
       tag.extract()
       continue
     else:
-      filename = download(dirname, tag['src'])
+      filename = download(dirname, 'thumbs', tag['src'])
       tag['src'] = filename
 
 def urlToName(url):
   return basename(urlsplit(url)[2])
 
 # Returns the filename of the downloaded file relative
-# to the final directory (as given by dirname)
-def download(dirname, url, localFileName = None):
+# to the chosen output directory.  The outputdir argument
+# gives the chosen output directory relative to the basedir
+# argument.
+def download(basedir, outputdir, url, localFileName = None):
   localName = urlToName(url)
   req = urllib2.Request(url)
   r = urllib2.urlopen(req)
@@ -102,10 +107,10 @@ def download(dirname, url, localFileName = None):
     if localFileName:
       # Save the file under the user-specified name
       localName = localFileName
-    f = open(os.path.join(dirname, localName), 'wb')
+    f = open(os.path.join(basedir, outputdir, localName), 'wb')
     f.write(r.read())
     f.close()
-  return localName
+  return os.path.join(outputdir, localName)
 
 def getUrl(filename):
   f = open(filename, 'r')

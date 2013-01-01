@@ -135,7 +135,9 @@ def getUrl(filename):
   return ''.join([url, "/feeds/posts/default"])
 
 def usage():
-  print "Usage: python blogpull.py outputdirname"
+  print "Usage: python blogpull.py urlfile outputdirname"
+  # url file is a text file with the url of the site being downloaded included
+
 
 def main():
   if len(sys.argv[1:]) != 2:

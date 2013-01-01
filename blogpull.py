@@ -10,6 +10,10 @@ def pullFeed(blogger_service, uri, dirname):
   # Only create the requested directories if it doesn't already exist
   try:
     os.makedirs(dirname)
+  except OSError, e:
+    if e.errno != errno.EEXIST:
+      raise
+  try:
     os.makedirs(os.path.join(dirname, 'fullsize'))
     os.makedirs(os.path.join(dirname, 'thumbs'))
   except OSError, e:
